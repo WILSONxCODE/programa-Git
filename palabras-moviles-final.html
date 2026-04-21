@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stellar Love Symphony</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        canvas { display: block; cursor: grab; }
+        canvas:active { cursor: grabbing; }
+        #info {
+            position: absolute;
+            left: 16px;
+            top: 16px;
+            z-index: 10;
+            color: rgba(255,255,255,0.9);
+            background: rgba(0,15,35,0.45);
+            border: 1px solid rgba(100,220,180,0.3);
+            border-radius: 14px;
+            padding: 12px 16px;
+            backdrop-filter: blur(10px);
+            max-width: 340px;
+        }
+        #info p { margin: 0 0 6px; font-size: 14px; line-height: 1.5; }
+        #info span { color: #64dcb4; font-weight: 600; }
+        #modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+            background: linear-gradient(135deg, #0a1f3a 0%, #1a3a5a 50%, #0a2a4a 100%);
+            border: 2px solid #64dcb4;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 90%;
+            box-shadow: 0 0 60px rgba(100, 220, 180, 0.5), inset 0 0 30px rgba(100, 220, 180, 0.1);
+            animation: slideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.7);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+        #modal h2 {
+            color: #64dcb4;
+            font-size: 32px;
+            margin: 0 0 20px;
+            text-shadow: 0 0 20px rgba(100, 220, 180, 0.6);
+        }
+        #modal p {
+            color: rgba(255, 255, 255, 0.95);
+            font-size: 18px;
+            line-height: 1.8;
+            margin: 0 0 25px;
+            font-style: italic;
+        }
+        #modal button {
+            background: linear-gradient(135deg, #64dcb4, #45a493);
+            border: none;
+            color: #000;
+            padding: 12px 28px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(100, 220, 180, 0.4);
+        }
+        #modal button:hover {
+            box-shadow: 0 6px 25px rgba(100, 220, 180, 0.6);
+            transform: translateY(-2px);
+        }
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 999;
+            animation: fadeIn 0.3s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="modal-overlay" id="overlay"></div>
+    <div id="modal">
+        <h2 id="modalWord">Amor</h2>
+        <p id="modalText">Lorem ipsum...</p>
+        <button onclick="closeModal()">Cerrar</button>
+    </div>
+    <div id="info">
+        <p><strong>Palabras Móviles</strong></p>
+        <p>Haz clic en las palabras para ver mensajes especiales.</p>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        class TextCard {
+            constructor(text) {
+                this.text = text;
+                this.sprite = this.createSprite();
+                this.velocity = new THREE.Vector3(0, 0, 0);
+                this.rotationSpeed = new THREE.Vector3(0, 0, 0.01);
+                this.isClickable = true;
+                this.originalPosition = new THREE.Vector3();
+                this.time = Math.random() * Math.PI * 2;
+            }
+
+            createSprite() {
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.width = 512;
+                canvas.height = 256;
+
+                const gradient = context.createLinearGradient(0, 0, canvas.width, canvas.height);
+                gradient.addColorStop(0, '#2a8f6a');
+                gradient.addColorStop(0.5, '#64dcb4');
+                gradient.addColorStop(1, '#3db896');
+                context.fillStyle = gradient;
+                context.fillRect(0, 0, canvas.width, canvas.height);
+
+                context.fillStyle = 'rgba(100, 220, 180, 0.12)';
+                context.fillRect(16, 16, canvas.width - 32, canvas.height - 32);
+
+                context.strokeStyle = 'rgba(100, 220, 180, 0.85)';
+                context.lineWidth = 8;
+                this.roundRect(context, 8, 8, canvas.width - 16, canvas.height - 16, 30);
+                context.stroke();
+
+                const textGradient = context.createLinearGradient(0, 0, canvas.width, 0);
+                textGradient.addColorStop(0, '#ff1744');
+                textGradient.addColorStop(0.5, '#ff5252');
+                textGradient.addColorStop(1, '#ff6e40');
+                context.font = 'bold italic 58px "Brush Script MT", "Segoe Script", cursive';
+                context.fillStyle = textGradient;
+                context.textAlign = 'center';
+                context.textBaseline = 'middle';
+                context.shadowColor = 'rgba(255, 23, 68, 0.95)';
+                context.shadowBlur = 28;
+                context.fillText(this.text, canvas.width / 2, canvas.height / 2);
+
+                const texture = new THREE.CanvasTexture(canvas);
+                texture.needsUpdate = true;
+                const material = new THREE.SpriteMaterial({ map: texture, transparent: true, opacity: 0.95 });
+                const sprite = new THREE.Sprite(material);
+                sprite.scale.set(5.5, 2.8, 1);
+                return sprite;
+            }
+
+            roundRect(ctx, x, y, width, height, radius) {
+                ctx.beginPath();
+                ctx.moveTo(x + radius, y);
+                ctx.lineTo(x + width - radius, y);
+                ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+                ctx.lineTo(x + width, y + height - radius);
+                ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+                ctx.lineTo(x + radius, y + height);
+                ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+                ctx.lineTo(x, y + radius);
+                ctx.quadraticCurveTo(x, y, x + radius, y);
+                ctx.closePath();
+            }
+
+            setPosition(position) {
+                this.sprite.position.copy(position);
+                this.position = position.clone();
+                this.originalPosition = position.clone();
+            }
+
+            update(deltaTime) {
+                this.time += deltaTime * 4; // Rápido movimiento
+                const amplitude = 8;
+                const frequency = 2;
+                this.position.x = this.originalPosition.x + Math.sin(this.time * frequency) * amplitude;
+                this.position.y = this.originalPosition.y;
+                this.position.z = this.originalPosition.z;
+                
+                this.sprite.position.copy(this.position);
+                this.sprite.material.rotation += this.rotationSpeed.z;
+            }
+        }
+
+        class WordGalaxy {
+            constructor(scene, wordCount = 90) {
+                this.scene = scene;
+                this.cards = [];
+                this.words = [
+                    'Amor', 'Luz', 'Magia', 'Encanto', 'Eterno', 'Dulzura', 'Calma', 'Alegría',
+                    'Cariño', 'Brillo', 'Sueño', 'Pasión', 'Sonrisa', 'Misterio', 'Esperanza',
+                    'Risa', 'Abrazo', 'Ternura', 'Mirada', 'Melodía', 'Armonía', 'Cielo', 'Corazón', 'Eterno'
+                ];
+
+                for (let i = 0; i < wordCount; i++) {
+                    const text = this.words[i % this.words.length];
+                    const card = new TextCard(text);
+                    const pos = new THREE.Vector3(
+                        (i - wordCount / 2) * 4, // Espaciados horizontalmente
+                        0,
+                        0
+                    );
+                    card.setPosition(pos);
+                    this.cards.push(card);
+                    this.scene.add(card.sprite);
+                }
+            }
+
+            update(deltaTime) {
+                this.cards.forEach(card => {
+                    card.update(deltaTime);
+                    if (card.position.length() > 32) {
+                        card.position.multiplyScalar(0.94);
+                    }
+                    card.sprite.lookAt(camera.position);
+                });
+            }
+        }
+
+        class Starfield {
+            constructor(scene, count = 1800) {
+                // Removed
+            }
+
+            update(time) {
+                // Removed
+            }
+        }
+
+        class AuraSphere {
+            constructor(scene) {
+                // Removed
+            }
+
+            update(time) {
+                // Removed
+            }
+        }
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio ? window.devicePixelRatio : 1);
+        document.body.appendChild(renderer.domElement);
+
+        camera.position.z = 20;
+
+        const wordGalaxy = new WordGalaxy(scene, 50);
+
+        const phrases = {
+            'Amor': 'El amor es la fuerza invisible que une dos almas en la eternidad.',
+            'Luz': 'Cada rayo de luz que ves es un reflejo de esperanza y verdad.',
+            'Magia': 'La magia real existe en los momentos compartidos con quienes amas.',
+            'Encanto': 'Tu presencia es el encanto que ilumina mis días más grises.',
+            'Eterno': 'Contigo, cada momento se convierte en una eternidad de dicha.',
+            'Dulzura': 'Tu dulzura endulza el sabor de cada día a mi lado.',
+            'Calma': 'En tus brazos encuentro la calma que mi corazón necesita.',
+            'Alegría': 'Tu sonrisa es la fuente infinita de mi alegría.',
+            'Cariño': 'Tu cariño es la caricia que calienta mi corazón.',
+            'Brillo': 'Brillas como una estrella en la noche de mi vida.',
+            'Sueño': 'Eres el sueño más hermoso que mis ojos pueden contemplar.',
+            'Pasión': 'La pasión que siento por ti es eterna e infinita.',
+            'Sonrisa': 'Tu sonrisa es la poesía que ninguna palabra puede describir.',
+            'Misterio': 'Hay un misterio hermoso en cada mirada que me diriges.',
+            'Esperanza': 'Contigo descubrí la esperanza de un futuro perfecto.',
+            'Risa': 'Tu risa es la música más hermosa que mis oídos pueden escuchar.',
+            'Abrazo': 'En tu abrazo encuentro el hogar que mis labios anhelan.',
+            'Ternura': 'Tu ternura es la caricia que despierta mi alma.',
+            'Mirada': 'En tu mirada veo reflejado todo lo que soy.',
+            'Melodía': 'Nuestro amor es una melodía perfecta tocada por el destino.',
+            'Armonía': 'Contigo todo está en perfecta armonía.',
+            'Cielo': 'Eres mi cielo, mi universo, mi infinito.',
+            'Corazón': 'Mi corazón late al ritmo del tuyo, siempre.'
+        };
+
+        function openModal(word) {
+            const modal = document.getElementById('modal');
+            const overlay = document.getElementById('overlay');
+            document.getElementById('modalWord').textContent = word;
+            document.getElementById('modalText').textContent = phrases[word] || 'Un mensaje especial para ti...';
+            modal.style.display = 'block';
+            overlay.style.display = 'block';
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('modal');
+            const overlay = document.getElementById('overlay');
+            modal.style.display = 'none';
+            overlay.style.display = 'none';
+        }
+
+        document.getElementById('overlay').addEventListener('click', closeModal);
+
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        let clickCount = 0;
+        let clickTimer = null;
+
+        window.addEventListener('click', (event) => {
+            if (modal.style.display === 'block') return;
+            
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(wordGalaxy.cards.map(c => c.sprite));
+            if (intersects.length > 0) {
+                const clickedSprite = intersects[0].object;
+                const clickedCard = wordGalaxy.cards.find(c => c.sprite === clickedSprite);
+                if (clickedCard) {
+                    openModal(clickedCard.text);
+                    return;
+                }
+            }
+
+            clickCount++;
+            if (clickCount === 1) {
+                clickTimer = setTimeout(() => {
+                    clickCount = 0;
+                }, 300);
+            } else if (clickCount === 2) {
+                clearTimeout(clickTimer);
+                clickCount = 0;
+                state.isZoomingToMax = true;
+                state.zoom = 2;
+            }
+        });
+
+        // Update target position for pointer
+        const modal = document.getElementById('modal');
+
+        let lastTime = 0;
+        function animate(time) {
+            const deltaTime = (time - lastTime) * 0.001;
+            lastTime = time;
+
+            wordGalaxy.update(deltaTime);
+
+            renderer.render(scene, camera);
+            requestAnimationFrame(animate);
+        }
+
+        animate(0);
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>

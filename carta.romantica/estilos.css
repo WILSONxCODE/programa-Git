@@ -1,0 +1,63 @@
+body {
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(to right, #ff9a9e, #fad0c4, #fad0c4);
+    overflow: hidden;
+}
+
+/* Carta */
+.carta {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255,255,255,0.85);
+    padding: 50px;
+    border-radius: 25px;
+    text-align: center;
+    box-shadow: 0 0 30px rgba(255, 105, 135, 0.6);
+    backdrop-filter: blur(10px);
+}
+
+/* Título */
+h1 {
+    font-family: 'Dancing Script', cursive;
+    font-size: 40px;
+    color: #ff4b5c;
+}
+
+/* Texto */
+#mensaje {
+    font-size: 18px;
+    margin-top: 20px;
+}
+
+/* Botón */
+button {
+    margin-top: 25px;
+    padding: 15px 30px;
+    border: none;
+    background: linear-gradient(45deg, #ff4b5c, #ff758c);
+    color: white;
+    font-size: 18px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+button:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 15px pink;
+}
+
+/* Corazones */
+.corazon {
+    position: absolute;
+    color: #ff4b5c;
+    animation: caer 6s linear infinite;
+}
+
+@keyframes caer {
+    0% { transform: translateY(-10vh); opacity: 1; }
+    100% { transform: translateY(110vh); opacity: 0; }
+}
